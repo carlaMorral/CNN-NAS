@@ -17,15 +17,16 @@ search_space = {
 }
 
 from nni.experiment import Experiment
+python_instance_carla = '/opt/conda/bin/python3'
 experiment = Experiment('local')
-experiment.config.trial_command = '/usr/local/bin/python3 model-hpo.py'
+experiment.config.trial_command = python_instance_carla + ' model-hpo.py'
 experiment.config.trial_code_directory = '.'
 experiment.config.search_space = search_space
 experiment.config.tuner.name = 'TPE'
 experiment.config.tuner.class_args['optimize_mode'] = 'maximize'
-experiment.config.max_trial_number = 10
+experiment.config.max_trial_number = 1
 experiment.config.trial_concurrency = 2
-experiment.run(8085)
+experiment.run(8081)
 
 input('Press enter to quit')
 experiment.stop()

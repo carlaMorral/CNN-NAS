@@ -176,7 +176,8 @@ model_space
 # Simply choosing (i.e., instantiate) an exploration strategy as below.
 
 import nni.retiarii.strategy as strategy
-search_strategy = strategy.Random(dedup=True)  # dedup=False if deduplication is not wanted
+# search_strategy = strategy.Random()
+search_strategy = strategy.RegularizedEvolution()
 
 # %%
 # Pick or customize a model evaluator
@@ -224,12 +225,13 @@ def test_epoch(model, device, test_loader):
     with torch.no_grad():
         for data, target in test_loader:
             data, target = data.to(device), target.to(device)
-            with profile(activities=[ProfilerActivity.CPU], record_shapes=False) as prof:
+            torch.cuda.synchronize(device)
+            with profile(activities=[ProfilerActivity.CPU, ProfilerActivity.CUDA], record_shapes=False) as prof:
                 with record_function("model_inference"):
                     output = model(data)
             pred = output.argmax(dim=1, keepdim=True)
             correct += pred.eq(target.view_as(pred)).sum().item()
-            inf_time += sum([item.cpu_time for item in prof.key_averages()])
+            inf_time += sum([item.cpu_time + item.cuda_time for item in prof.key_averages()])
 
     test_loss /= len(test_loader.dataset)
     accuracy = 100. * correct / len(test_loader.dataset)
@@ -300,8 +302,8 @@ exp_config.trial_concurrency = 2  # will run two trials concurrently
 # Remember to set the following config if you want to GPU.
 # ``use_active_gpu`` should be set true if you wish to use an occupied GPU (possibly running a GUI).
 
-exp_config.trial_gpu_number = 0
-exp_config.training_service.use_active_gpu = False
+exp_config.trial_gpu_number = 1
+exp_config.training_service.use_active_gpu = True
 
 # %%
 # Launch the experiment. The experiment should take several minutes to finish on a workstation with 2 GPUs.
