@@ -31,6 +31,7 @@ import torch
 import torch.nn.functional as F
 import nni.retiarii.nn.pytorch as nn
 from nni.retiarii import model_wrapper
+from torch.profiler import profile, record_function, ProfilerActivity
 
 
 @model_wrapper      # this decorator should be put on the out most
@@ -219,20 +220,25 @@ def test_epoch(model, device, test_loader):
     model.eval()
     test_loss = 0
     correct = 0
+    inf_time = 0
     with torch.no_grad():
         for data, target in test_loader:
             data, target = data.to(device), target.to(device)
-            output = model(data)
+            with profile(activities=[ProfilerActivity.CPU], record_shapes=False) as prof:
+                with record_function("model_inference"):
+                    output = model(data)
             pred = output.argmax(dim=1, keepdim=True)
             correct += pred.eq(target.view_as(pred)).sum().item()
+            inf_time += sum([item.cpu_time for item in prof.key_averages()])
 
     test_loss /= len(test_loader.dataset)
     accuracy = 100. * correct / len(test_loader.dataset)
+    inf_time /= len(test_loader.dataset)
 
     print('\nTest set: Accuracy: {}/{} ({:.0f}%)\n'.format(
           correct, len(test_loader.dataset), accuracy))
 
-    return accuracy
+    return accuracy, inf_time
 
 
 def evaluate_model(model_cls):
@@ -251,12 +257,12 @@ def evaluate_model(model_cls):
         # train the model for one epoch
         train_epoch(model, device, train_loader, optimizer, epoch)
         # test the model for one epoch
-        accuracy = test_epoch(model, device, test_loader)
+        accuracy, inf_time = test_epoch(model, device, test_loader)
         # call report intermediate result. Result can be float or dict
-        nni.report_intermediate_result(accuracy)
+        nni.report_intermediate_result(accuracy*(inf_time**-.07))
 
     # report final test result
-    nni.report_final_result(accuracy)
+    nni.report_final_result(accuracy*(inf_time**-.07))
 
 
 # %%
@@ -294,8 +300,8 @@ exp_config.trial_concurrency = 2  # will run two trials concurrently
 # Remember to set the following config if you want to GPU.
 # ``use_active_gpu`` should be set true if you wish to use an occupied GPU (possibly running a GUI).
 
-exp_config.trial_gpu_number = 1
-exp_config.training_service.use_active_gpu = True
+exp_config.trial_gpu_number = 0
+exp_config.training_service.use_active_gpu = False
 
 # %%
 # Launch the experiment. The experiment should take several minutes to finish on a workstation with 2 GPUs.
