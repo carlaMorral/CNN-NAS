@@ -1,0 +1,26 @@
+Metadata-Version: 2.1
+Name: cnn-nas
+Version: 0.1
+Summary: An Exploration of Efficient CNN Design using Neural Architecture Search using Microsoft's Neural Network Intelligence library
+Home-page: https://github.com/carlaMorral/CNN-NAS
+Author: Jan Olivetti and Carla Morral
+Author-email: ['jo2708@columbia.edu', 'cm4257@columbia.edu']
+Classifier: Development Status :: 3 - Alpha
+Classifier: License :: OSI Approved :: MIT License
+Classifier: Programming Language :: Python :: 3.7
+Description-Content-Type: text/markdown
+
+# CNN-NAS
+
+Primer pas: executar NAS en local
+Veure com reduir el numero d'epochs, training examples i la mida del search space
+
+Segon pas: incorporar temps d'execucio en el metric
+
+Després fer experiments. Com varia la performance amb:
+- diferents funcions al metric
+- diferent numero d'epochs/training samples
+- possiblement, diferents estratègies de cerca (e.g. carregar-te models dolents abans d'hora)
+
+### How to run
+The Python version this code was tested with is Python 3.7.12.

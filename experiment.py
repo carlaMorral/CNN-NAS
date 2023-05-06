@@ -18,7 +18,7 @@ class Experiment:
         self.exp_config.training_service.use_active_gpu = True
 
     def run(self):
-        self.exp.run(self.exp_config, 8081)
+        self.exp.run(self.exp_config, 8082)
 
     def export_top(self):
         for model_dict in self.exp.export_top_models(formatter='dict'):

@@ -1,0 +1,8 @@
+README.md
+setup.py
+cnn_nas.egg-info/PKG-INFO
+cnn_nas.egg-info/SOURCES.txt
+cnn_nas.egg-info/dependency_links.txt
+cnn_nas.egg-info/entry_points.txt
+cnn_nas.egg-info/requires.txt
+cnn_nas.egg-info/top_level.txt
