@@ -1,20 +1,4 @@
-"""
-Hello, NAS!
-===========
-This is the 101 tutorial of Neural Architecture Search (NAS) on NNI.
-In this tutorial, we will search for a neural architecture on MNIST dataset with the help of NAS framework of NNI, i.e., *Retiarii*.
-We use multi-trial NAS as an example to show how to construct and explore a model space.
-There are mainly three crucial components for a neural architecture search task, namely,
-* Model search space that defines a set of models to explore.
-* A proper strategy as the method to explore this model space.
-* A model evaluator that reports the performance of every model in the space.
-Currently, PyTorch is the only supported framework by Retiarii, and we have only tested **PyTorch 1.7 to 1.10**.
-This tutorial assumes PyTorch context but it should also apply to other frameworks, which is in our future plan.
-Define your Model Space
------------------------
-Model space is defined by users to express a set of models that users want to explore, which contains potentially good-performing models.
-In this framework, a model space is defined with two parts: a base model and possible mutations on the base model.
-"""
+
 
 # %%
 #
