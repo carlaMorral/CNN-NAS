@@ -6,3 +6,4 @@ lib64
 pyvenv.cfg
 run.sh
 data
+__pycache__/
