@@ -14,8 +14,8 @@ class Experiment:
         self.exp_config.experiment_name = 'mnist_search'
         self.exp_config.max_trial_number = 4
         self.exp_config.trial_concurrency = 2
-        self.exp_config.trial_gpu_number = 1
-        self.exp_config.training_service.use_active_gpu = True
+        self.exp_config.trial_gpu_number = 0
+        self.exp_config.training_service.use_active_gpu = False
 
     def run(self):
         self.exp.run(self.exp_config, 8081)
