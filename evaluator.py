@@ -26,6 +26,8 @@ class Evaluator:
                 print('Train Epoch: {} [{}/{} ({:.0f}%)]\tLoss: {:.6f}'.format(
                     epoch, batch_idx * len(data), len(train_loader.dataset),
                     100. * batch_idx / len(train_loader), loss.item()))
+            if batch_idx > 10:
+                return
 
 
     def test_epoch(self, model, device, test_loader):
@@ -36,7 +38,7 @@ class Evaluator:
         with torch.no_grad():
             for data, target in test_loader:
                 data, target = data.to(device), target.to(device)
-                torch.cuda.synchronize(device)
+                #torch.cuda.synchronize(device)
                 with profile(activities=[ProfilerActivity.CPU, ProfilerActivity.CUDA], record_shapes=False) as prof:
                     with record_function("model_inference"):
                         output = model(data)
@@ -95,4 +97,6 @@ class Evaluator:
             accuracy, inf_time = self.test_epoch(model, device, test_loader)
             nni.report_intermediate_result(accuracy*(inf_time**-.07))
 
+        print(f'Final metric: {accuracy*(inf_time**-.07):.5f}')
         nni.report_final_result(accuracy*(inf_time**-.07))
+
