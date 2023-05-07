@@ -12,6 +12,8 @@ Després fer experiments. Com varia la performance amb:
 
 ### How to run
 Install the requirements:
+`pip3 install .`
 `python3 setup.py install`
+
 Run the project:
 `python3 main.py`
