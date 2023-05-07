@@ -16,6 +16,7 @@ class Experiment:
         self.exp_config.max_trial_number = 100
         self.exp_config.trial_concurrency = 4
         self.exp_config.trial_gpu_number = 1
+        self.exp_config.training_service.use_active_gpu = True
 
     def run(self):
         self.exp.run(self.exp_config, 8082)
