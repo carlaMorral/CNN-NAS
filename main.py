@@ -13,9 +13,8 @@ if __name__=="__main__":
     search_strategy = strategy.RegularizedEvolution()
     experiment = Experiment(model_space, evaluator, search_strategy)
     try:
-        os.remove("avgep1acc.txt")
+        os.remove("pastepacc.txt")
     except FileNotFoundError:
         pass
     experiment.run()
     experiment.export_top()
-    
