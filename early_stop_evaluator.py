@@ -111,9 +111,6 @@ class Evaluator:
         model.to(device)
 
         optimizer = torch.optim.Adam(model.parameters(), lr=1e-3)
-        #transf = transforms.Compose([transforms.ToTensor(), transforms.Normalize((0.1307,), (0.3081,))])
-        #train_loader = DataLoader(MNIST('data/mnist', download=True, transform=transf), batch_size=64, shuffle=True)
-        #test_loader = DataLoader(MNIST('data/mnist', download=True, train=False, transform=transf), batch_size=64)
         train_loader, test_loader = self.load_data()
 
         for epoch in range(self.num_epochs):

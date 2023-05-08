@@ -2,14 +2,13 @@ import nni
 import torch
 
 from torchvision import transforms
-from torchvision.datasets import MNIST, CIFAR10
-from torch.utils.data import DataLoader
+from torchvision.datasets import CIFAR10
 
 from torch.profiler import profile, record_function, ProfilerActivity
 
 
-class Evaluator:
-    def __init__(self, num_epochs = 3):
+class TestEvaluator:
+    def __init__(self, num_epochs = 50):
         self.num_epochs = num_epochs
 
     def train_epoch(self, model, device, train_loader, optimizer, epoch):
@@ -78,9 +77,7 @@ class Evaluator:
 
         return trainloader, testloader
 
-    def evaluate_model(self, model_cls):
-        model = model_cls()
-
+    def evaluate_model(self, model):
         device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
         model.to(device)
 
@@ -90,8 +87,8 @@ class Evaluator:
         for epoch in range(self.num_epochs):
             self.train_epoch(model, device, train_loader, optimizer, epoch)
             accuracy, inf_time = self.test_epoch(model, device, test_loader)
-            nni.report_intermediate_result(accuracy*(inf_time**-.07))
+            print(f'Epoch {epoch} time: {inf_time}')
+            print(f'Epoch {epoch} accuracy: {accuracy}')
 
-        print(f'Final metric: {accuracy*(inf_time**-.07):.5f}')
-        nni.report_final_result(accuracy*(inf_time**-.07))
-
+        print(f'Final time: {inf_time}')
+        print(f'Final time: {accuracy}')
