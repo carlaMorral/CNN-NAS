@@ -85,17 +85,27 @@ class Evaluator:
         model = model_cls()
 
         open_mode = os.O_RDONLY | os.O_CREAT
-        fd = os.open('avgep1acc.txt', open_mode)
+        fd = os.open('pastepacc.txt', open_mode)
         pid = os.getpid()
         fcntl.flock(fd, fcntl.LOCK_SH)
-        file_info = os.read(fd, os.path.getsize(fd)).rstrip()
+        file_info = os.read(fd, os.path.getsize(fd)).decode().rstrip()
         fcntl.flock(fd, fcntl.LOCK_UN)
         os.close(fd)
-        if len(file_info) == 0:
-            ep1_threshold = 0
-        else:
-            ep1_metric, ep1_models = file_info.split()
-            ep1_threshold = float(ep1_metric)/float(ep1_models)
+        past_metrics = []
+        for epoch in range(self.num_epochs):
+            past_metrics.append([])
+        if len(file_info) > 0:
+            for line in file_info.split('\n'):
+                metric, epoch = line.split()
+                past_metrics[int(epoch)].append(float(metric))
+        print(past_metrics)
+        thresholds = [0]*self.num_epochs
+        for epoch in range(self.num_epochs-1):
+            past_metrics[epoch].sort()
+            if len(past_metrics[epoch]) >= max(5, self.num_epochs-epoch):
+                target_rank = int(len(past_metrics[epoch])/(self.num_epochs-epoch))
+                thresholds[epoch] = (past_metrics[epoch][target_rank]+past_metrics[epoch][target_rank-1])/2
+        print(thresholds)
 
         device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
         model.to(device)
@@ -110,28 +120,18 @@ class Evaluator:
             self.train_epoch(model, device, train_loader, optimizer, epoch)
             accuracy, inf_time = self.test_epoch(model, device, test_loader)
             metric = accuracy*(inf_time**-.07)
-            if epoch == 0:
-                open_mode = os.O_RDWR | os.O_CREAT
-                fd = os.open('avgep1acc.txt', open_mode)
-                pid = os.getpid()
-                fcntl.flock(fd, fcntl.LOCK_SH)
-                file_info = os.read(fd, os.path.getsize(fd)).rstrip()
-                if len(file_info) == 0:
-                    ep1_metric, ep1_models = 0, 0
-                else:
-                    ep1_metric, ep1_models = file_info.split()
-                    ep1_metric, ep1_models = float(ep1_metric), float(ep1_models)
-                ep1_metric += metric
-                ep1_models += 1
-                os.truncate(fd, 0)
-                os.lseek(fd, 0, 0)
-                os.write(fd, f"{ep1_metric:} {ep1_models}".encode())
-                fcntl.flock(fd, fcntl.LOCK_UN)
-                os.close(fd)
+            open_mode = os.O_RDWR | os.O_CREAT
+            fd = os.open('pastepacc.txt', open_mode)
+            pid = os.getpid()
+            fcntl.flock(fd, fcntl.LOCK_SH)
+            file_info = os.read(fd, os.path.getsize(fd)).rstrip()
+            os.write(fd, f"{metric} {epoch}\n".encode())
+            fcntl.flock(fd, fcntl.LOCK_UN)
+            os.close(fd)
 
-                if ep1_threshold > metric:
-                    break
             nni.report_intermediate_result(accuracy*(inf_time**-.07))
+            if thresholds[epoch] > metric:
+                break
 
         print(f'Final metric: {accuracy*(inf_time**-.07):.5f}')
         nni.report_final_result(accuracy*(inf_time**-.07))
