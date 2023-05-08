@@ -1,6 +1,7 @@
 import json
 import base64
 import pickle
+from nni.retiarii.hub.pytorch.mobilenetv3 import MobileNetV3Space
 from nni.retiarii.execution.python import *
 
 
@@ -29,9 +30,17 @@ evaluator = EvaluatorClass(func)
 graph_data = PythonGraphData(cls, init_parameters, mutation, evaluator)
 evaluator.num_epochs = 50
 
-def _model():
-    return graph_data.class_(**graph_data.init_parameters)
+# Create a MobileNetV3Space instance with the specified mutation
+space = MobileNetV3Space(**mutation)
 
-with ContextStack('fixed', graph_data.mutation):
-    graph_data.evaluator._execute(_model)
+# Instantiate a MobileNetV3 model with the space
+#model = MobileNetV3('small', space)
+
+func(space.__class__)
+
+# def _model():
+#     return graph_data.class_(**graph_data.init_parameters)
+
+# with ContextStack('fixed', graph_data.mutation):
+#     graph_data.evaluator._execute(_model)
 
