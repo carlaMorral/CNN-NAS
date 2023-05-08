@@ -98,11 +98,11 @@ class Evaluator:
             for line in file_info.split('\n'):
                 metric, epoch = line.split()
                 past_metrics[int(epoch)].append(float(metric))
-        print(past_metrics)
         thresholds = [0]*self.num_epochs
         for epoch in range(self.num_epochs-1):
+            past_metrics[epoch] = past_metrics[epoch][-20:]
             past_metrics[epoch].sort()
-            if len(past_metrics[epoch]) >= max(5, self.num_epochs-epoch):
+            if len(past_metrics[epoch]) >= max(20, self.num_epochs-epoch):
                 target_rank = int(len(past_metrics[epoch])/(self.num_epochs-epoch))
                 thresholds[epoch] = (past_metrics[epoch][target_rank]+past_metrics[epoch][target_rank-1])/2
         print(thresholds)
