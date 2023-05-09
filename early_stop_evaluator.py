@@ -10,10 +10,11 @@ from torch.utils.data import DataLoader
 
 from torch.profiler import profile, record_function, ProfilerActivity
 
-
 class Evaluator:
-    def __init__(self, num_epochs = 3):
+    def __init__(self, num_epochs = 3, cull_ratio=0, max_population=30):
         self.num_epochs = num_epochs
+        self.cull_ratio = cull_ratio
+        self.max_population = max_population
 
     def train_epoch(self, model, device, train_loader, optimizer, epoch):
         loss_fn = torch.nn.CrossEntropyLoss()
@@ -29,6 +30,8 @@ class Evaluator:
                 print('Train Epoch: {} [{}/{} ({:.0f}%)]\tLoss: {:.6f}'.format(
                     epoch, batch_idx * len(data), len(train_loader.dataset),
                     100. * batch_idx / len(train_loader), loss.item()))
+            if batch_idx >= 5:
+                break
 
 
     def test_epoch(self, model, device, test_loader):
@@ -92,18 +95,18 @@ class Evaluator:
         fcntl.flock(fd, fcntl.LOCK_UN)
         os.close(fd)
         past_metrics = []
-        for epoch in range(self.num_epochs):
+        for epoch in range(self.num_epochs-1):
             past_metrics.append([])
         if len(file_info) > 0:
             for line in file_info.split('\n'):
                 metric, epoch = line.split()
                 past_metrics[int(epoch)].append(float(metric))
-        thresholds = [0]*self.num_epochs
+        thresholds = [0]*(self.num_epochs-1)
         for epoch in range(self.num_epochs-1):
-            past_metrics[epoch] = past_metrics[epoch][-20:]
+            past_metrics[epoch] = past_metrics[epoch][-self.max_population:]
             past_metrics[epoch].sort()
-            if len(past_metrics[epoch]) >= max(20, self.num_epochs-epoch):
-                target_rank = int(len(past_metrics[epoch])/(self.num_epochs-epoch))
+            if len(past_metrics[epoch]) >= max(self.max_population, self.num_epochs-epoch):
+                target_rank = int(self.cull_ratio*self.max_population*(epoch+1)/(self.num_epochs-1))
                 thresholds[epoch] = (past_metrics[epoch][target_rank]+past_metrics[epoch][target_rank-1])/2
         print(thresholds)
 
@@ -117,18 +120,22 @@ class Evaluator:
             self.train_epoch(model, device, train_loader, optimizer, epoch)
             accuracy, inf_time = self.test_epoch(model, device, test_loader)
             metric = accuracy*(inf_time**-.07)
-            open_mode = os.O_RDWR | os.O_CREAT
-            fd = os.open('pastepacc.txt', open_mode)
-            pid = os.getpid()
-            fcntl.flock(fd, fcntl.LOCK_SH)
-            file_info = os.read(fd, os.path.getsize(fd)).rstrip()
-            os.write(fd, f"{metric} {epoch}\n".encode())
-            fcntl.flock(fd, fcntl.LOCK_UN)
-            os.close(fd)
-
             nni.report_intermediate_result(accuracy*(inf_time**-.07))
-            if thresholds[epoch] > metric:
-                break
+            if epoch != self.num_epochs-1:
+                open_mode = os.O_RDWR | os.O_CREAT
+                fd = os.open('pastepacc.txt', open_mode)
+                pid = os.getpid()
+                fcntl.flock(fd, fcntl.LOCK_SH)
+                file_info = os.read(fd, os.path.getsize(fd)).rstrip()
+                os.write(fd, f"{metric} {epoch}\n".encode())
+                if thresholds[epoch] > metric:
+                    for future_epoch in range(epoch+1, self.num_epochs-1):
+                        os.write(fd, f"{metric} {epoch}\n".encode())
+                fcntl.flock(fd, fcntl.LOCK_UN)
+                os.close(fd)
+
+                if thresholds[epoch] > metric:
+                    break
 
         print(f'Final metric: {accuracy*(inf_time**-.07):.5f}')
         nni.report_final_result(accuracy*(inf_time**-.07))

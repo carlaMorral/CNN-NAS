@@ -13,7 +13,7 @@ class Experiment:
     def _config(self):
         self.exp_config = RetiariiExeConfig('local')
         self.exp_config.experiment_name = 'cifar10_search'
-        self.exp_config.max_trial_number = 100
+        self.exp_config.max_trial_number = 1000
         self.exp_config.trial_concurrency = 4
         self.exp_config.trial_gpu_number = 1
         self.exp_config.training_service.use_active_gpu = True

@@ -8,8 +8,8 @@ from mobilenetv3_mod import MobileNetV3Space
 
 if __name__=="__main__":
     model_space = MobileNetV3Space()
-    evaluator = Evaluator(num_epochs=3)
-    search_strategy = strategy.RegularizedEvolution(population_size=20, cycles=975, sample_size=5)
+    evaluator = Evaluator(num_epochs=3, cull_ratio=.4, max_population=30)
+    search_strategy = strategy.RegularizedEvolution(population_size=30, cycles=970, sample_size=7)
     experiment = Experiment(model_space, evaluator, search_strategy)
     try:
         os.remove("pastepacc.txt")
