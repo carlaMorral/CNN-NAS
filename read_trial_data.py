@@ -36,7 +36,7 @@ trials.sort()
 lowest_start = trials[0].start
 best_id = None
 best_metric = 0
-for trial in trials:
+for trial in trials[:250]:
     if trial.start < lowest_start:
         lowest_start = trial.start
     if trial.metric > best_metric:
@@ -44,8 +44,8 @@ for trial in trials:
         best_id = trial.id
 
 print(f'Info for experiment {exp_id}:')
-print(f'Best model ID: {best_id}')
-print(f'Best metric: {best_metric}')
+print(f'Best model ID among first 250: {best_id}')
+print(f'Best metric among first 250: {best_metric}')
 if len(trials) >= 250:
     print(f'Time for 250 trials: {str(trials[249].end - lowest_start)}')
 print(f'Time for {len(trials)} trials: {str(trials[-1].end - lowest_start)}')

@@ -10,7 +10,7 @@ from torch.utils.data import DataLoader
 
 from torch.profiler import profile, record_function, ProfilerActivity
 
-class Evaluator:
+class EarlyTerminationEvaluator:
     def __init__(self, num_epochs = 3, cull_ratio=0, max_population=30):
         self.num_epochs = num_epochs
         self.cull_ratio = cull_ratio
