@@ -40,7 +40,8 @@ class EarlyTerminationEvaluator:
         with torch.no_grad():
             for data, target in test_loader:
                 data, target = data.to(device), target.to(device)
-                #torch.cuda.synchronize(device)
+                # We use the profiler to measure inference time as it gives the most precise measurements
+                # The overhead it introduces isn't too important as training accounts for the vast majority of the search algorithm
                 with profile(activities=[ProfilerActivity.CPU, ProfilerActivity.CUDA], record_shapes=False) as prof:
                     with record_function("model_inference"):
                         output = model(data)
@@ -85,6 +86,8 @@ class EarlyTerminationEvaluator:
     def evaluate_model(self, model_cls):
         model = model_cls()
 
+        # Fetch the metrics from the current population and calculate the
+        # percentiles necessary at each epoch to terminate early
         open_mode = os.O_RDONLY | os.O_CREAT
         fd = os.open('pastepacc.txt', open_mode)
         pid = os.getpid()
@@ -106,7 +109,6 @@ class EarlyTerminationEvaluator:
             if len(past_metrics[epoch]) >= max(self.max_population, self.num_epochs-epoch):
                 target_rank = int(self.cull_ratio*self.max_population*(epoch+1)/(self.num_epochs-1))
                 thresholds[epoch] = (past_metrics[epoch][target_rank]+past_metrics[epoch][target_rank-1])/2
-        print(thresholds)
 
         device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
         model.to(device)
@@ -114,11 +116,17 @@ class EarlyTerminationEvaluator:
         optimizer = torch.optim.Adam(model.parameters(), lr=1e-3)
         train_loader, test_loader = self.load_data()
 
+        # The metric ACC*inf_time**-0.07 is taken from the FBNet paper
+        # This formula makes it so that an increase of 5% in accuracy and halving
+        # the inference time have the same impact.
+
         for epoch in range(self.num_epochs):
             self.train_epoch(model, device, train_loader, optimizer, epoch)
             accuracy, inf_time = self.test_epoch(model, device, test_loader)
             metric = accuracy*(inf_time**-.07)
             nni.report_intermediate_result(accuracy*(inf_time**-.07))
+            # Save the current metric into the file containing the metrics of the
+            # whole population
             if epoch != self.num_epochs-1:
                 open_mode = os.O_RDWR | os.O_CREAT
                 fd = os.open('pastepacc.txt', open_mode)
@@ -126,6 +134,7 @@ class EarlyTerminationEvaluator:
                 fcntl.flock(fd, fcntl.LOCK_SH)
                 file_info = os.read(fd, os.path.getsize(fd)).rstrip()
                 os.write(fd, f"{metric} {epoch}\n".encode())
+                # Save the metrics for future epochs as well if we terminate early
                 if thresholds[epoch] > metric:
                     for future_epoch in range(epoch+1, self.num_epochs-1):
                         os.write(fd, f"{metric} {epoch}\n".encode())

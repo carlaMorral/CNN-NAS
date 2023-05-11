@@ -16,6 +16,7 @@ if len(sys.argv) < 2:
     print("Please specify an experiment ID")
     exit()
 
+# Obtain information from the experiment by reading all the log files
 exp_id = sys.argv[1]
 trials = []
 for trial in os.listdir(f'../nni-experiments/{exp_id}/trials'):
@@ -36,6 +37,8 @@ trials.sort()
 lowest_start = trials[0].start
 best_id = None
 best_metric = 0
+# In the report we only look at the first 250 trials of each experiment
+# to make it fair for all the experiments
 for trial in trials[:250]:
     if trial.start < lowest_start:
         lowest_start = trial.start

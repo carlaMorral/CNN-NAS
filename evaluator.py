@@ -36,7 +36,8 @@ class Evaluator:
         with torch.no_grad():
             for data, target in test_loader:
                 data, target = data.to(device), target.to(device)
-                #torch.cuda.synchronize(device)
+                # We use the profiler to measure inference time as it gives the most precise measurements
+                # The overhead it introduces isn't too important as training accounts for the vast majority of the search algorithm
                 with profile(activities=[ProfilerActivity.CPU, ProfilerActivity.CUDA], record_shapes=False) as prof:
                     with record_function("model_inference"):
                         output = model(data)
@@ -87,6 +88,9 @@ class Evaluator:
         optimizer = torch.optim.Adam(model.parameters(), lr=1e-3)
         train_loader, test_loader = self.load_data()
 
+        # The metric ACC*inf_time**-0.07 is taken from the FBNet paper
+        # This formula makes it so that an increase of 5% in accuracy and halving
+        # the inference time have the same impact.
         for epoch in range(self.num_epochs):
             self.train_epoch(model, device, train_loader, optimizer, epoch)
             accuracy, inf_time = self.test_epoch(model, device, test_loader)

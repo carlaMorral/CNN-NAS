@@ -3,8 +3,16 @@ from test_evaluator import *
 from mobilenetv3_mod import MobileNetV3Space
 from nni.retiarii.execution.python import *
 
+import os
+import sys
 
-path = 'parameters.cfg'
+if len(sys.argv) < 2:
+    print("Please specify a trial path")
+    exit()
+
+trial_path = sys.argv[1]
+
+path = f'{trial_path}/parameter.cfg'
 with open(path, 'r') as f:
     parameter_cfg = json.load(f)
 

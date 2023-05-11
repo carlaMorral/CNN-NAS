@@ -35,7 +35,6 @@ class TestEvaluator:
         with torch.no_grad():
             for data, target in test_loader:
                 data, target = data.to(device), target.to(device)
-                #torch.cuda.synchronize(device)
                 with profile(activities=[ProfilerActivity.CPU, ProfilerActivity.CUDA], record_shapes=False) as prof:
                     with record_function("model_inference"):
                         output = model(data)
