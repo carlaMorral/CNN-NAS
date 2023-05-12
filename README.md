@@ -67,11 +67,10 @@ We tested some combinations of epochs (1, 3, 5, 10) and cull rates (0%, 15%, 30%
 
 The results of the experiments of cull rate = 0.66 aren't shown because, with the cull rate so high, the evolution algorithm wasn't able to improve the models from the initial population so it didn't make sense to spend computational resources to test a model that we already knew was going to be very bad compared to the others. The experiments with 10 epochs only ran for about half the trials as all the other experiments because they were taking far too long, so the results aren't really comparable to the other experiments but we include them here for completeness. The reported search time is the amount of time it would've taken to perform 250 trials at the rate that the rest of trials were performed.
 
-The search time refers to the total amountThe inference speedups are calculated with respect to a baseline model obtained by running NAS for 250 trials with 3 epochs per model and a cull rate of 30%. This baseline model also had an 83.73% accuracy after being trained for 50 epochs.
+The search time refers to the total amount of the time that went into the NAS.The inference speedups are calculated with respect to a baseline model obtained by running NAS for 250 trials with 3 epochs per model and a cull rate of 30%. This baseline model also had an 83.73% accuracy after being trained for 50 epochs. The search for the baseline model took 3h 06m.
 
 |            |                   | 0% cull          | 15% cull         | 30% cull         | 45% cull         |
 |------------|-------------------|------------------|------------------|------------------|------------------|
-|            |                   | Bandwidth (GB/s) | Bandwidth (GB/s) | Bandwidth (GB/s) | Bandwidth (GB/s) |
 | 1 epoch    | Accuracy          | 81.45            | -                | -                | -                |
 |            | Search time       | 1h 24m           | -                | -                | -                |
 |            | Inference speedup | 1.06             | -                | -                | -                |
